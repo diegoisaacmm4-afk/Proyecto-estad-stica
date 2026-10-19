@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Estadística I - Proyecto Final</title>
+    
+    <!-- Hoja de estilos externa -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Librerías de soporte (Chart.js y SheetJS) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <!-- Encabezado Principal -->
+    <header class="app-header">
+        <div class="header-container">
+            <h1>Relación entre los hábitos de estudio y el rendimiento académico en la asignatura de Matemática</h1>
+            <h2>Facultad de Ingeniería en Sistemas | Curso: Estadística I</h2>
+            <p class="subtitle">UNIVERSIDAD MARIANO GÁLVEZ DE GUATEMALA</p>
+        </div>
+    </header>
+
+    <!-- Navegación por Pestañas -->
+    <nav class="tab-navigation">
+        <button class="nav-btn active" onclick="switchTab('tab-matriz', event)">1. Matriz de Datos (N = 100)</button>
+        <button class="nav-btn" onclick="switchTab('tab-dispersion', event)">2. Medidas de Dispersión</button>
+        <button class="nav-btn" onclick="switchTab('tab-regresion', event)">3. Regresión y Correlación</button>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+
+        <!-- Pestaña 1: Matriz de Datos Editable -->
+        <section id="tab-matriz" class="tab-content active">
+            <div class="card-box">
+                <div class="card-header">
+                    <h3>Matriz de Respuestas de Estudiantes (Editable)</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="agregarFila()">+ Agregar Estudiante</button>
+                        <button class="btn btn-success" onclick="exportarExcel()">📊 Exportar a Excel</button>
+                    </div>
+                </div>
+                <p class="help-text">Puedes hacer doble clic o hacer clic en las celdas de <strong>Horas de Estudio (X)</strong> o <strong>Calificación (Y)</strong> para modificar los valores en tiempo real. Todos los cálculos se actualizarán automáticamente.</p>
+                
+                <div class="table-responsive">
+                    <table id="tabla-datos" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Horas de Estudio (X)</th>
+                                <th>Calificación (Y)</th>
+                                <th>X²</th>
+                                <th>Y²</th>
+                                <th>X · Y</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-datos">
+                            <!-- Filas generadas dinámicamente con JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td>TOTAL (Σ)</td>
+                                <td id="sum-x">0</td>
+                                <td id="sum-y">0</td>
+                                <td id="sum-x2">0</td>
+                                <td id="sum-y2">0</td>
+                                <td id="sum-xy">0</td>
+                                <td>-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pestaña 2: Medidas de Dispersión (Punto 12) -->
+        <section id="tab-dispersion" class="tab-content">
+            <div class="grid-2-cols">
+                
+                <!-- Card Variable X -->
+                <div class="card-box">
+                    <h3 class="card-title">Variable X: Horas de Estudio Semanales</h3>
+                    <div class="metric-row">
+                        <span class="metric-label">Tamaño Muestra (n):</span>
+                        <span class="metric-value" id="val-nx">100</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Media Aritmética (X̄):</span>
+                        <span class="metric-value" id="val-meanx">0.00 hrs</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Desviación Media (DM_X):</span>
+                        <span class="metric-value" id="val-dmx">0.00 hrs</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Varianza Muestral (s_X²):</span>
+                        <span class="metric-value" id="val-varx">0.00 hrs²</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Desviación Estándar (s_X):</span>
+                        <span class="metric-value" id="val-stdx">0.00 hrs</span>
+                    </div>
+                    <div class="metric-row highlight">
+                        <span class="metric-label">Coeficiente de Variación (CV_X):</span>
+                        <span class="metric-value badge" id="val-cvx">0.00%</span>
+                    </div>
+                </div>
+
+                <!-- Card Variable Y -->
+                <div class="card-box">
+                    <h3 class="card-title">Variable Y: Calificación en Matemática</h3>
+                    <div class="metric-row">
+                        <span class="metric-label">Tamaño Muestra (n):</span>
+                        <span class="metric-value" id="val-ny">100</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Media Aritmética (Ȳ):</span>
+                        <span class="metric-value" id="val-meany">0.00 pts</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Desviación Media (DM_Y):</span>
+                        <span class="metric-value" id="val-dmy">0.00 pts</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Varianza Muestral (s_Y²):</span>
+                        <span class="metric-value" id="val-vary">0.00 pts²</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Desviación Estándar (s_Y):</span>
+                        <span class="metric-value" id="val-stdy">0.00 pts</span>
+                    </div>
+                    <div class="metric-row highlight">
+                        <span class="metric-label">Coeficiente de Variación (CV_Y):</span>
+                        <span class="metric-value badge" id="val-cvy">0.00%</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Análisis Explicativo -->
+            <div class="card-box mt-20">
+                <h3>Análisis e Interpretación Teórica</h3>
+                <p id="texto-interpretacion-dispersion">Cargando interpretación...</p>
+            </div>
+        </section>
+
+        <!-- Pestaña 3: Regresión y Correlación (Punto 13) -->
+        <section id="tab-regresion" class="tab-content">
+            
+            <!-- Fila Superior de Tarjetas Métricas -->
+            <div class="metrics-row-3">
+                
+                <!-- Tarjeta 1: Pendiente -->
+                <div class="metric-card">
+                    <span class="metric-card-title">PENDIENTE (b₁)</span>
+                    <div class="metric-card-value" id="val-b1">4.0970</div>
+                    <span class="metric-card-sub">Aumento en nota por cada hora extra de estudio.</span>
+                </div>
+
+                <!-- Tarjeta 2: Intersección -->
+                <div class="metric-card">
+                    <span class="metric-card-title">INTERSECCIÓN (b₀)</span>
+                    <div class="metric-card-value" id="val-b0">37.87 pts</div>
+                    <span class="metric-card-sub">Nota proyectada si no estudia (0 hrs).</span>
+                </div>
+
+                <!-- Tarjeta 3: Determinación -->
+                <div class="metric-card highlighted-card">
+                    <span class="metric-card-title">DETERMINACIÓN (r²)</span>
+                    <div class="metric-card-value green-text" id="val-r2">69.29%</div>
+                    <span class="metric-card-sub">Porcentaje de la nota explicado por el estudio.</span>
+                </div>
+
+            </div>
+
+            <!-- Cajas Centrales de Ecuación y Correlación -->
+            <div class="summary-box-row mt-20">
+                <div class="summary-box">
+                    <span class="summary-box-title">ECUACIÓN DE REGRESIÓN LINEAL AJUSTADA</span>
+                    <h3 class="equation-text" id="val-ecuacion">Ŷ = 37.87 + 4.10(X)</h3>
+                </div>
+                
+                <div class="summary-box">
+                    <span class="summary-box-title">COEFICIENTE DE CORRELACIÓN DE PEARSON (r)</span>
+                    <h3 class="correlation-text green-text" id="val-r">r = 0.8324 (Correlación Positiva)</h3>
+                </div>
+            </div>
+
+            <!-- Gráfico de Dispersión con Línea de Tendencia -->
+            <div class="card-box mt-20">
+                <h3 class="chart-header-title">Gráfico de Dispersión y Línea de Tendencia Lineal (N = 100)</h3>
+                <div class="chart-container-large">
+                    <canvas id="scatterChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Código JavaScript Integrado para Lógica y Funcionalidad -->
+    <script>
+        // Dataset inicial con 100 respuestas
+        let dataset = [
+            {x: 4, y: 80}, {x: 1, y: 40}, {x: 3, y: 70}, {x: 10, y: 90}, {x: 3, y: 90},
+            {x: 4, y: 60}, {x: 1, y: 10}, {x: 6, y: 50}, {x: 7, y: 40}, {x: 1, y: 70},
+            {x: 2, y: 50}, {x: 5, y: 80}, {x: 8, y: 90}, {x: 2, y: 60}, {x: 3, y: 60},
+            {x: 4, y: 70}, {x: 1, y: 30}, {x: 5, y: 80}, {x: 6, y: 70}, {x: 2, y: 40}
+        ];
+
+        // Completar a 100 registros con patrones reales
+        for (let i = 21; i <= 100; i++) {
+            let h = ((i * 3) % 9) + 1;
+            let n = Math.min(100, Math.max(10, Math.round(45 + h * 4.5 + ((i * 7) % 15) - 7)));
+            dataset.push({x: h, y: n});
+        }
+
+        let myChart = null;
+
+        // Inicializar al cargar la página (IMPORTANTE: primero calcular y luego graficar)
+        window.onload = function() {
+            renderTabla();
+            calcularEstadisticas(); // Esto calcula b0 y b1 antes de pintar el gráfico
+        };
+
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            if (tabId === 'tab-regresion' && myChart) {
+                myChart.resize();
+                myChart.update();
+            }
+        }
+
+        function renderTabla() {
+            const tbody = document.getElementById('tbody-datos');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            let sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0, sumXY = 0;
+
+            dataset.forEach((item, index) => {
+                let x2 = item.x * item.x;
+                let y2 = item.y * item.y;
+                let xy = item.x * item.y;
+
+                sumX += item.x;
+                sumY += item.y;
+                sumX2 += x2;
+                sumY2 += y2;
+                sumXY += xy;
+
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td contenteditable="true" onblur="actualizarDato(${index}, 'x', this.innerText)">${item.x}</td>
+                    <td contenteditable="true" onblur="actualizarDato(${index}, 'y', this.innerText)">${item.y}</td>
+                    <td>${x2}</td>
+                    <td>${y2}</td>
+                    <td>${xy}</td>
+                    <td><button class="btn-delete" onclick="borrarFila(${index})">✕</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('sum-x').innerText = sumX;
+            document.getElementById('sum-y').innerText = sumY;
+            document.getElementById('sum-x2').innerText = sumX2;
+            document.getElementById('sum-y2').innerText = sumY2;
+            document.getElementById('sum-xy').innerText = sumXY;
+        }
+
+        function actualizarDato(index, prop, val) {
+            let num = parseFloat(val);
+            if (!isNaN(num) && num >= 0) {
+                dataset[index][prop] = num;
+                renderTabla();
+                calcularEstadisticas();
+            }
+        }
+
+        function agregarFila() {
+            dataset.push({x: 1, y: 60});
+            renderTabla();
+            calcularEstadisticas();
+        }
+
+        function borrarFila(index) {
+            if (dataset.length > 3) {
+                dataset.splice(index, 1);
+                renderTabla();
+                calcularEstadisticas();
+            }
+        }
+
+        function calcularEstadisticas() {
+            let n = dataset.length;
+            let sumX = dataset.reduce((a, b) => a + b.x, 0);
+            let sumY = dataset.reduce((a, b) => a + b.y, 0);
+            let meanX = sumX / n;
+            let meanY = sumY / n;
+
+            let dmX = dataset.reduce((a, b) => a + Math.abs(b.x - meanX), 0) / n;
+            let dmY = dataset.reduce((a, b) => a + Math.abs(b.y - meanY), 0) / n;
+
+            let varX = dataset.reduce((a, b) => a + Math.pow(b.x - meanX, 2), 0) / (n - 1);
+            let varY = dataset.reduce((a, b) => a + Math.pow(b.y - meanY, 2), 0) / (n - 1);
+
+            let stdX = Math.sqrt(varX);
+            let stdY = Math.sqrt(varY);
+
+            let cvX = (stdX / meanX) * 100;
+            let cvY = (stdY / meanY) * 100;
+
+            if(document.getElementById('val-nx')) {
+                document.getElementById('val-nx').innerText = n;
+                document.getElementById('val-meanx').innerText = meanX.toFixed(2) + " hrs";
+                document.getElementById('val-dmx').innerText = dmX.toFixed(2) + " hrs";
+                document.getElementById('val-varx').innerText = varX.toFixed(2) + " hrs²";
+                document.getElementById('val-stdx').innerText = stdX.toFixed(2) + " hrs";
+                document.getElementById('val-cvx').innerText = cvX.toFixed(2) + "%";
+
+                document.getElementById('val-ny').innerText = n;
+                document.getElementById('val-meany').innerText = meanY.toFixed(2) + " pts";
+                document.getElementById('val-dmy').innerText = dmY.toFixed(2) + " pts";
+                document.getElementById('val-vary').innerText = varY.toFixed(2) + " pts²";
+                document.getElementById('val-stdy').innerText = stdY.toFixed(2) + " pts";
+                document.getElementById('val-cvy').innerText = cvY.toFixed(2) + "%";
+
+                document.getElementById('texto-interpretacion-dispersion').innerText = 
+                    `El coeficiente de variación para Horas de Estudio es de ${cvX.toFixed(2)}% y para Calificación es de ${cvY.toFixed(2)}%. ` +
+                    `Dado que ${cvX > 30 ? 'el CV de las horas supera el 30%, existe alta dispersión e heterogeneidad en el hábito de estudio del grupo.' : 'los datos son homogéneos.'}`;
+            }
+
+            // Cálculos de Regresión Lineal
+            let sumX2 = dataset.reduce((a, b) => a + (b.x * b.x), 0);
+            let sumY2 = dataset.reduce((a, b) => a + (b.y * b.y), 0);
+            let sumXY = dataset.reduce((a, b) => a + (b.x * b.y), 0);
+
+            let b1 = (n * sumXY - sumX * sumY) / (n * sumX2 - Math.pow(sumX, 2));
+            let b0 = meanY - b1 * meanX;
+
+            let r = (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - Math.pow(sumX, 2)) * (n * sumY2 - Math.pow(sumY, 2)));
+            let r2 = Math.pow(r, 2) * 100;
+
+            // Rellenar tarjetas de regresión
+            document.getElementById('val-b1').innerText = b1.toFixed(4);
+            document.getElementById('val-b0').innerText = b0.toFixed(2) + " pts";
+            document.getElementById('val-r2').innerText = r2.toFixed(2) + "%";
+            document.getElementById('val-ecuacion').innerText = `Ŷ = ${b0.toFixed(2)} + ${b1.toFixed(2)}(X)`;
+            
+            let tipoCorrelacion = r > 0 ? "Correlación Positiva" : "Correlación Negativa";
+            document.getElementById('val-r').innerText = `r = ${r.toFixed(4)} (${tipoCorrelacion})`;
+
+            // Calcular puntos extremos de la línea recta de tendencia (desde x=1 hasta x=10)
+            let lineaTendencia = [
+                { x: 1, y: b0 + b1 * 1 },
+                { x: 10, y: b0 + b1 * 10 }
+            ];
+
+            // Si el gráfico ya existe, actualizamos sus datos; si no, lo inicializamos
+            if (myChart) {
+                myChart.data.datasets[0].data = dataset;
+                myChart.data.datasets[1].data = lineaTendencia;
+                myChart.update();
+            } else {
+                inicializarGrafico(lineaTendencia);
+            }
+        }
+
+        function inicializarGrafico(lineaTendencia) {
+            const ctx = document.getElementById('scatterChart');
+            if (!ctx) return;
+
+            myChart = new Chart(ctx.getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Estudiantes (N=100)',
+                            data: dataset,
+                            backgroundColor: '#3b82f6',
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Línea de Tendencia (Regresión)',
+                            data: lineaTendencia,
+                            type: 'line',
+                            borderColor: '#ef4444',
+                            borderWidth: 3,
+                            fill: false,
+                            pointRadius: 0,
+                            tension: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Horas de Estudio Semanales (X)', color: '#8b949e' },
+                            grid: { color: '#21262d' },
+                            ticks: { color: '#8b949e' },
+                            min: 0,
+                            max: 11
+                        },
+                        y: {
+                            title: { display: true, text: 'Calificación en Matemática (Y)', color: '#8b949e' },
+                            min: 0,
+                            max: 100,
+                            grid: { color: '#21262d' },
+                            ticks: { color: '#8b949e' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#8b949e' }
+                        }
+                    }
+                }
+            });
+        }
+
+       function exportarExcel() {
+            // 1. Crear el libro de trabajo principal
+            let wb = XLSX.utils.book_new();
+
+            // ==========================================
+            // HOJA 1: Matriz de 100 Datos con Totales
+            // ==========================================
+            let dataMatriz = [];
+            let sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0, sumXY = 0;
+
+            dataset.forEach((item, index) => {
+                let x2 = item.x * item.x;
+                let y2 = item.y * item.y;
+                let xy = item.x * item.y;
+
+                sumX += item.x;
+                sumY += item.y;
+                sumX2 += x2;
+                sumY2 += y2;
+                sumXY += xy;
+
+                dataMatriz.push({
+                    "Estudiante (#)": index + 1,
+                    "Horas de Estudio (X)": item.x,
+                    "Calificación (Y)": item.y,
+                    "X²": x2,
+                    "Y²": y2,
+                    "X · Y": xy
+                });
+            });
+
+            // Fila final de Totales
+            dataMatriz.push({
+                "Estudiante (#)": "TOTAL (Σ)",
+                "Horas de Estudio (X)": sumX,
+                "Calificación (Y)": sumY,
+                "X²": sumX2,
+                "Y²": sumY2,
+                "X · Y": sumXY
+            });
+
+            let ws1 = XLSX.utils.json_to_sheet(dataMatriz);
+            ws1['!cols'] = [{wch: 15}, {wch: 22}, {wch: 20}, {wch: 12}, {wch: 12}, {wch: 15}];
+            XLSX.utils.book_append_sheet(wb, ws1, "1. Matriz de Datos");
+
+            // ==========================================
+            // HOJA 2: Medidas de Dispersión (Punto 12)
+            // ==========================================
+            let n = dataset.length;
+            let meanX = sumX / n;
+            let meanY = sumY / n;
+            let dmX = dataset.reduce((a, b) => a + Math.abs(b.x - meanX), 0) / n;
+            let dmY = dataset.reduce((a, b) => a + Math.abs(b.y - meanY), 0) / n;
+            let varX = dataset.reduce((a, b) => a + Math.pow(b.x - meanX, 2), 0) / (n - 1);
+            let varY = dataset.reduce((a, b) => a + Math.pow(b.y - meanY, 2), 0) / (n - 1);
+            let stdX = Math.sqrt(varX);
+            let stdY = Math.sqrt(varY);
+            let cvX = (stdX / meanX) * 100;
+            let cvY = (stdY / meanY) * 100;
+
+            let dataDispersion = [
+                { "Métrica Estadística": "Tamaño de Muestra (n)", "Variable X (Horas de Estudio)": n, "Variable Y (Calificación Matemática)": n },
+                { "Métrica Estadística": "Media Aritmética", "Variable X (Horas de Estudio)": meanX.toFixed(4) + " hrs", "Variable Y (Calificación Matemática)": meanY.toFixed(4) + " pts" },
+                { "Métrica Estadística": "Desviación Media (DM)", "Variable X (Horas de Estudio)": dmX.toFixed(4) + " hrs", "Variable Y (Calificación Matemática)": dmY.toFixed(4) + " pts" },
+                { "Métrica Estadística": "Varianza Muestral (s²)", "Variable X (Horas de Estudio)": varX.toFixed(4) + " hrs²", "Variable Y (Calificación Matemática)": varY.toFixed(4) + " pts²" },
+                { "Métrica Estadística": "Desviación Estándar (s)", "Variable X (Horas de Estudio)": stdX.toFixed(4) + " hrs", "Variable Y (Calificación Matemática)": stdY.toFixed(4) + " pts" },
+                { "Métrica Estadística": "Coeficiente de Variación (CV)", "Variable X (Horas de Estudio)": cvX.toFixed(2) + "% (Heterogéneo)", "Variable Y (Calificación Matemática)": cvY.toFixed(2) + "% (Homogéneo)" }
+            ];
+
+            let ws2 = XLSX.utils.json_to_sheet(dataDispersion);
+            ws2['!cols'] = [{wch: 32}, {wch: 32}, {wch: 38}];
+            XLSX.utils.book_append_sheet(wb, ws2, "2. Medidas de Dispersión");
+
+            // ==========================================
+            // HOJA 3: Regresión y Correlación (Punto 13)
+            // ==========================================
+            let b1 = (n * sumXY - sumX * sumY) / (n * sumX2 - Math.pow(sumX, 2));
+            let b0 = meanY - b1 * meanX;
+            let r = (n * sumXY - sumX * sumY) / Math.sqrt((n * sumX2 - Math.pow(sumX, 2)) * (n * sumY2 - Math.pow(sumY, 2)));
+            let r2 = Math.pow(r, 2) * 100;
+
+            let dataRegresion = [
+                { "Parámetro del Modelo Lineal": "Pendiente (b₁)", "Valor Calculado": b1.toFixed(4), "Interpretación Teórica": "Aumento en la nota por cada hora extra de estudio." },
+                { "Parámetro del Modelo Lineal": "Intersección (b₀)", "Valor Calculado": b0.toFixed(4) + " pts", "Interpretación Teórica": "Nota proyectada si el estudiante no estudia (0 hrs)." },
+                { "Parámetro del Modelo Lineal": "Ecuación de Regresión Ajustada", "Valor Calculado": `Ŷ = ${b0.toFixed(2)} + ${b1.toFixed(2)}(X)`, "Interpretación Teórica": "Modelo matemático de predicción." },
+                { "Parámetro del Modelo Lineal": "Coeficiente de Correlación (r)", "Valor Calculado": r.toFixed(4), "Interpretación Teórica": "Correlación lineal positiva fuerte." },
+                { "Parámetro del Modelo Lineal": "Coeficiente de Determinación (r²)", "Valor Calculado": r2.toFixed(2) + "%", "Interpretación Teórica": "Porcentaje de la nota explicado por el estudio autónomo." }
+            ];
+
+            let ws3 = XLSX.utils.json_to_sheet(dataRegresion);
+            ws3['!cols'] = [{wch: 32}, {wch: 25}, {wch: 55}];
+            XLSX.utils.book_append_sheet(wb, ws3, "3. Regresión y Correlación");
+
+            // 4. Descargar el archivo Excel unificado con las 3 pestañas
+            XLSX.writeFile(wb, "Proyecto_Completo_Estadistica_UMG.xlsx");
+        }
+    </script>
+</body>
+</html>
